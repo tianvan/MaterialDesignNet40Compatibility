@@ -19,7 +19,7 @@ namespace MaterialDesignThemes.Wpf
     public enum DialogHostOpenDialogCommandDataContextSource
     {
         /// <summary>
-        /// The data context from the sender element (typically a <see cref="Button"/>) 
+        /// The data context from the sender element (typically a <see cref="Button"/>)
         /// is applied to the content.
         /// </summary>
         SenderElement,
@@ -91,8 +91,8 @@ namespace MaterialDesignThemes.Wpf
         /// <summary>
         /// Shows a modal dialog. To use, a <see cref="DialogHost"/> instance must be in a visual tree (typically this may be specified towards the root of a Window's XAML).
         /// </summary>
-        /// <param name="content">Content to show (can be a control or view model).</param>        
-        /// <param name="openedEventHandler">Allows access to opened event which would otherwise have been subscribed to on a instance.</param>        
+        /// <param name="content">Content to show (can be a control or view model).</param>
+        /// <param name="openedEventHandler">Allows access to opened event which would otherwise have been subscribed to on a instance.</param>
         /// <returns>Task result is the parameter used to close the dialog, typically what is passed to the <see cref="CloseDialogCommand"/> command.</returns>
         public static async Task<object> Show(object content, DialogOpenedEventHandler openedEventHandler)
         {
@@ -113,7 +113,7 @@ namespace MaterialDesignThemes.Wpf
         /// <summary>
         /// Shows a modal dialog. To use, a <see cref="DialogHost"/> instance must be in a visual tree (typically this may be specified towards the root of a Window's XAML).
         /// </summary>
-        /// <param name="content">Content to show (can be a control or view model).</param>        
+        /// <param name="content">Content to show (can be a control or view model).</param>
         /// <param name="openedEventHandler">Allows access to opened event which would otherwise have been subscribed to on a instance.</param>
         /// <param name="closingEventHandler">Allows access to closing event which would otherwise have been subscribed to on a instance.</param>
         /// <returns>Task result is the parameter used to close the dialog, typically what is passed to the <see cref="CloseDialogCommand"/> command.</returns>
@@ -149,7 +149,7 @@ namespace MaterialDesignThemes.Wpf
         /// Shows a modal dialog. To use, a <see cref="DialogHost"/> instance must be in a visual tree (typically this may be specified towards the root of a Window's XAML).
         /// </summary>
         /// <param name="content">Content to show (can be a control or view model).</param>
-        /// <param name="dialogIdentifier"><see cref="Identifier"/> of the instance where the dialog should be shown. Typically this will match an identifer set in XAML. <c>null</c> is allowed.</param>        
+        /// <param name="dialogIdentifier"><see cref="Identifier"/> of the instance where the dialog should be shown. Typically this will match an identifer set in XAML. <c>null</c> is allowed.</param>
         /// <param name="closingEventHandler">Allows access to closing event which would otherwise have been subscribed to on a instance.</param>
         /// <returns>Task result is the parameter used to close the dialog, typically what is passed to the <see cref="CloseDialogCommand"/> command.</returns>
         public static Task<object> Show(object content, object dialogIdentifier, DialogClosingEventHandler closingEventHandler)
@@ -167,17 +167,28 @@ namespace MaterialDesignThemes.Wpf
         /// <returns>Task result is the parameter used to close the dialog, typically what is passed to the <see cref="CloseDialogCommand"/> command.</returns>
         public static async Task<object> Show(object content, object dialogIdentifier, DialogOpenedEventHandler openedEventHandler, DialogClosingEventHandler closingEventHandler)
         {
-            if (content == null) throw new ArgumentNullException(nameof(content));
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
 
             if (LoadedInstances.Count == 0)
+            {
                 throw new InvalidOperationException("No loaded DialogHost instances.");
+            }
+
             LoadedInstances.First().Dispatcher.VerifyAccess();
 
             var targets = LoadedInstances.Where(dh => dialogIdentifier == null || Equals(dh.Identifier, dialogIdentifier)).ToList();
             if (targets.Count == 0)
+            {
                 throw new InvalidOperationException($"No loaded DialogHost have an {nameof(Identifier)} property matching {nameof(dialogIdentifier)} argument.");
+            }
+
             if (targets.Count > 1)
+            {
                 throw new InvalidOperationException("Multiple viable DialogHosts.  Specify a unique Identifier on each DialogHost, especially where multiple Windows are a concern.");
+            }
 
             return await targets[0].ShowInternal(content, openedEventHandler, closingEventHandler);
         }
@@ -185,9 +196,10 @@ namespace MaterialDesignThemes.Wpf
         internal async Task<object> ShowInternal(object content, DialogOpenedEventHandler openedEventHandler, DialogClosingEventHandler closingEventHandler)
         {
             if (IsOpen)
+            {
                 throw new InvalidOperationException("DialogHost is already open.");
+            }
 
-            
             _dialogTaskCompletionSource = new TaskCompletionSource<object>();
 
             AssertTargetableContent();
@@ -195,8 +207,8 @@ namespace MaterialDesignThemes.Wpf
             _asyncShowOpenedEventHandler = openedEventHandler;
             _asyncShowClosingEventHandler = closingEventHandler;
             SetCurrentValue(IsOpenProperty, true);
-            
-            object result = await _dialogTaskCompletionSource.Task;
+
+            var result = await _dialogTaskCompletionSource.Task;
 
             _asyncShowOpenedEventHandler = null;
             _asyncShowClosingEventHandler = null;
@@ -223,8 +235,8 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         public object Identifier
         {
-            get { return GetValue(IdentifierProperty); }
-            set { SetValue(IdentifierProperty, value); }
+            get => GetValue(IdentifierProperty);
+            set => SetValue(IdentifierProperty, value);
         }
 
         public static readonly DependencyProperty IsOpenProperty = DependencyProperty.Register(
@@ -235,7 +247,10 @@ namespace MaterialDesignThemes.Wpf
             var dialogHost = (DialogHost)dependencyObject;
 
             if (dialogHost._popupContentControl != null)
+            {
                 ValidationAssist.SetSuppress(dialogHost._popupContentControl, !dialogHost.IsOpen);
+            }
+
             VisualStateManager.GoToState(dialogHost, dialogHost.SelectState(), !TransitionAssist.GetDisableTransitions(dialogHost));
 
             if (dialogHost.IsOpen)
@@ -256,7 +271,7 @@ namespace MaterialDesignThemes.Wpf
                 dialogHost._closeCleanUp();
                 //NB: _dialogTaskCompletionSource is only set in the case where the dialog is shown with Show
                 //To get into this case you need to display the dialog with Show and then hide it by setting IsOpen to false
-                //Setting this here ensures the other 
+                //Setting this here ensures the other
                 dialogHost._dialogTaskCompletionSource?.TrySetResult(null);
 
                 // Don't attempt to Invoke if _restoreFocusDialogClose hasn't been assigned yet. Can occur
@@ -266,7 +281,7 @@ namespace MaterialDesignThemes.Wpf
 
                 return;
             }
-            
+
             dialogHost.CurrentSession = new DialogSession(dialogHost);
             var window = Window.GetWindow(dialogHost);
             dialogHost._restoreFocusDialogClose = window != null ? FocusManager.GetFocusedElement(window) : null;
@@ -274,7 +289,7 @@ namespace MaterialDesignThemes.Wpf
             //multiple ways of calling back that the dialog has opened:
             // * routed event
             // * the attached property (which should be applied to the button which opened the dialog
-            // * straight forward dependency property 
+            // * straight forward dependency property
             // * handler provided to the async show method
             var dialogOpenedEventArgs = new DialogOpenedEventArgs(dialogHost.CurrentSession, DialogOpenedEvent);
             dialogHost.OnDialogOpened(dialogOpenedEventArgs);
@@ -291,7 +306,7 @@ namespace MaterialDesignThemes.Wpf
                 {
                     //https://github.com/ButchersBoy/MaterialDesignInXamlToolkit/issues/187
                     //totally not happy about this, but on immediate validation we can get some weird looking stuff...give WPF a kick to refresh...
-                    Task.Delay(300).ContinueWith(t => child.Dispatcher.BeginInvoke(new Action(() => child.InvalidateVisual())));
+                    TaskEx.Delay(300).ContinueWith(t => child.Dispatcher.BeginInvoke(new Action(() => child.InvalidateVisual())));
                 }
             }));
         }
@@ -303,8 +318,8 @@ namespace MaterialDesignThemes.Wpf
 
         public bool IsOpen
         {
-            get { return (bool)GetValue(IsOpenProperty); }
-            set { SetValue(IsOpenProperty, value); }
+            get => (bool)GetValue(IsOpenProperty);
+            set => SetValue(IsOpenProperty, value);
         }
 
         public static readonly DependencyProperty DialogContentProperty = DependencyProperty.Register(
@@ -312,8 +327,8 @@ namespace MaterialDesignThemes.Wpf
 
         public object DialogContent
         {
-            get { return GetValue(DialogContentProperty); }
-            set { SetValue(DialogContentProperty, value); }
+            get => GetValue(DialogContentProperty);
+            set => SetValue(DialogContentProperty, value);
         }
 
         public static readonly DependencyProperty DialogContentTemplateProperty = DependencyProperty.Register(
@@ -321,8 +336,8 @@ namespace MaterialDesignThemes.Wpf
 
         public DataTemplate DialogContentTemplate
         {
-            get { return (DataTemplate)GetValue(DialogContentTemplateProperty); }
-            set { SetValue(DialogContentTemplateProperty, value); }
+            get => (DataTemplate)GetValue(DialogContentTemplateProperty);
+            set => SetValue(DialogContentTemplateProperty, value);
         }
 
         public static readonly DependencyProperty DialogContentTemplateSelectorProperty = DependencyProperty.Register(
@@ -330,8 +345,8 @@ namespace MaterialDesignThemes.Wpf
 
         public DataTemplateSelector DialogContentTemplateSelector
         {
-            get { return (DataTemplateSelector)GetValue(DialogContentTemplateSelectorProperty); }
-            set { SetValue(DialogContentTemplateSelectorProperty, value); }
+            get => (DataTemplateSelector)GetValue(DialogContentTemplateSelectorProperty);
+            set => SetValue(DialogContentTemplateSelectorProperty, value);
         }
 
         public static readonly DependencyProperty DialogContentStringFormatProperty = DependencyProperty.Register(
@@ -339,8 +354,8 @@ namespace MaterialDesignThemes.Wpf
 
         public string DialogContentStringFormat
         {
-            get { return (string)GetValue(DialogContentStringFormatProperty); }
-            set { SetValue(DialogContentStringFormatProperty, value); }
+            get => (string)GetValue(DialogContentStringFormatProperty);
+            set => SetValue(DialogContentStringFormatProperty, value);
         }
 
         public static readonly DependencyProperty DialogMarginProperty = DependencyProperty.Register(
@@ -348,8 +363,8 @@ namespace MaterialDesignThemes.Wpf
 
         public Thickness DialogMargin
         {
-            get { return (Thickness)GetValue(DialogMarginProperty); }
-            set { SetValue(DialogMarginProperty, value); }
+            get => (Thickness)GetValue(DialogMarginProperty);
+            set => SetValue(DialogMarginProperty, value);
         }
 
         public static readonly DependencyProperty OpenDialogCommandDataContextSourceProperty = DependencyProperty.Register(
@@ -361,8 +376,8 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         public DialogHostOpenDialogCommandDataContextSource OpenDialogCommandDataContextSource
         {
-            get { return (DialogHostOpenDialogCommandDataContextSource)GetValue(OpenDialogCommandDataContextSourceProperty); }
-            set { SetValue(OpenDialogCommandDataContextSourceProperty, value); }
+            get => (DialogHostOpenDialogCommandDataContextSource)GetValue(OpenDialogCommandDataContextSourceProperty);
+            set => SetValue(OpenDialogCommandDataContextSourceProperty, value);
         }
 
         public static readonly DependencyProperty CloseOnClickAwayProperty = DependencyProperty.Register(
@@ -373,8 +388,8 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         public bool CloseOnClickAway
         {
-            get { return (bool)GetValue(CloseOnClickAwayProperty); }
-            set { SetValue(CloseOnClickAwayProperty, value); }
+            get => (bool)GetValue(CloseOnClickAwayProperty);
+            set => SetValue(CloseOnClickAwayProperty, value);
         }
 
         public static readonly DependencyProperty CloseOnClickAwayParameterProperty = DependencyProperty.Register(
@@ -385,8 +400,8 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         public object CloseOnClickAwayParameter
         {
-            get { return GetValue(CloseOnClickAwayParameterProperty); }
-            set { SetValue(CloseOnClickAwayParameterProperty, value); }
+            get => GetValue(CloseOnClickAwayParameterProperty);
+            set => SetValue(CloseOnClickAwayParameterProperty, value);
         }
 
         public static readonly DependencyProperty SnackbarMessageQueueProperty = DependencyProperty.Register(
@@ -401,7 +416,11 @@ namespace MaterialDesignThemes.Wpf
                 dialogHost._currentSnackbarMessageQueueUnPauseAction = null;
             }
 
-            if (!dialogHost.IsOpen) return;
+            if (!dialogHost.IsOpen)
+            {
+                return;
+            }
+
             var snackbarMessageQueue = dependencyPropertyChangedEventArgs.NewValue as SnackbarMessageQueue;
             dialogHost._currentSnackbarMessageQueueUnPauseAction = snackbarMessageQueue?.Pause();
         }
@@ -411,8 +430,8 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         public SnackbarMessageQueue SnackbarMessageQueue
         {
-            get { return (SnackbarMessageQueue)GetValue(SnackbarMessageQueueProperty); }
-            set { SetValue(SnackbarMessageQueueProperty, value); }
+            get => (SnackbarMessageQueue)GetValue(SnackbarMessageQueueProperty);
+            set => SetValue(SnackbarMessageQueueProperty, value);
         }
 
         public static readonly DependencyProperty DialogThemeProperty =
@@ -423,8 +442,8 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         public BaseTheme DialogTheme
         {
-            get { return (BaseTheme)GetValue(DialogThemeProperty); }
-            set { SetValue(DialogThemeProperty, value); }
+            get => (BaseTheme)GetValue(DialogThemeProperty);
+            set => SetValue(DialogThemeProperty, value);
         }
 
         public static readonly DependencyProperty PopupStyleProperty = DependencyProperty.Register(
@@ -432,21 +451,25 @@ namespace MaterialDesignThemes.Wpf
 
         public Style PopupStyle
         {
-            get { return (Style)GetValue(PopupStyleProperty); }
-            set { SetValue(PopupStyleProperty, value); }
+            get => (Style)GetValue(PopupStyleProperty);
+            set => SetValue(PopupStyleProperty, value);
         }
 
         public override void OnApplyTemplate()
         {
             if (_contentCoverGrid != null)
+            {
                 _contentCoverGrid.MouseLeftButtonUp -= ContentCoverGridOnMouseLeftButtonUp;
+            }
 
             _popup = GetTemplateChild(PopupPartName) as Popup;
             _popupContentControl = GetTemplateChild(PopupContentPartName) as ContentControl;
             _contentCoverGrid = GetTemplateChild(ContentCoverGridName) as Grid;
 
             if (_contentCoverGrid != null)
+            {
                 _contentCoverGrid.MouseLeftButtonUp += ContentCoverGridOnMouseLeftButtonUp;
+            }
 
             VisualStateManager.GoToState(this, SelectState(), false);
 
@@ -495,8 +518,8 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         public DialogOpenedEventHandler DialogOpenedCallback
         {
-            get { return (DialogOpenedEventHandler)GetValue(DialogOpenedCallbackProperty); }
-            set { SetValue(DialogOpenedCallbackProperty, value); }
+            get => (DialogOpenedEventHandler)GetValue(DialogOpenedCallbackProperty);
+            set => SetValue(DialogOpenedCallbackProperty, value);
         }
 
         protected void OnDialogOpened(DialogOpenedEventArgs eventArgs)
@@ -548,8 +571,8 @@ namespace MaterialDesignThemes.Wpf
         /// </summary>
         public DialogClosingEventHandler DialogClosingCallback
         {
-            get { return (DialogClosingEventHandler)GetValue(DialogClosingCallbackProperty); }
-            set { SetValue(DialogClosingCallbackProperty, value); }
+            get => (DialogClosingEventHandler)GetValue(DialogClosingCallbackProperty);
+            set => SetValue(DialogClosingCallbackProperty, value);
         }
 
         protected void OnDialogClosing(DialogClosingEventArgs eventArgs)
@@ -561,10 +584,12 @@ namespace MaterialDesignThemes.Wpf
 
         internal void AssertTargetableContent()
         {
-            var existingBinding = BindingOperations.GetBindingExpression(this, DialogContentProperty);
+            BindingExpression existingBinding = BindingOperations.GetBindingExpression(this, DialogContentProperty);
             if (existingBinding != null)
+            {
                 throw new InvalidOperationException(
                     "Content cannot be passed to a dialog via the OpenDialog if DialogContent already has a binding.");
+            }
         }
 
         internal void Close(object parameter)
@@ -576,14 +601,14 @@ namespace MaterialDesignThemes.Wpf
             //multiple ways of calling back that the dialog is closing:
             // * routed event
             // * the attached property (which should be applied to the button which opened the dialog
-            // * straight forward dependency property 
+            // * straight forward dependency property
             // * handler provided to the async show method
             OnDialogClosing(dialogClosingEventArgs);
             _attachedDialogClosingEventHandler?.Invoke(this, dialogClosingEventArgs);
             DialogClosingCallback?.Invoke(this, dialogClosingEventArgs);
             _asyncShowClosingEventHandler?.Invoke(this, dialogClosingEventArgs);
 
-            
+
             if (!dialogClosingEventArgs.IsCancelled)
             {
                 _dialogTaskCompletionSource?.TrySetResult(parameter);
@@ -601,14 +626,21 @@ namespace MaterialDesignThemes.Wpf
         /// <returns>The popup content.</returns>
         internal UIElement FocusPopup()
         {
-            var child = _popup?.Child;
-            if (child == null) return null;
+            UIElement child = _popup?.Child;
+            if (child == null)
+            {
+                return null;
+            }
 
             CommandManager.InvalidateRequerySuggested();
-            var focusable = child.VisualDepthFirstTraversal().OfType<UIElement>().FirstOrDefault(ui => ui.Focusable && ui.IsVisible);
+            UIElement focusable = child.VisualDepthFirstTraversal().OfType<UIElement>().FirstOrDefault(ui => ui.Focusable && ui.IsVisible);
             focusable?.Dispatcher.InvokeAsync(() =>
             {
-                if (!focusable.Focus()) return;
+                if (!focusable.Focus())
+                {
+                    return;
+                }
+
                 focusable.MoveFocus(new TraversalRequest(FocusNavigationDirection.First));
             }, DispatcherPriority.Background);
 
@@ -619,19 +651,27 @@ namespace MaterialDesignThemes.Wpf
         {
             var window = Window.GetWindow(this);
             if (window != null && !window.IsActive)
+            {
                 window.Activate();
+            }
+
             base.OnPreviewMouseDown(e);
         }
 
         private void ContentCoverGridOnMouseLeftButtonUp(object sender, MouseButtonEventArgs mouseButtonEventArgs)
         {
             if (CloseOnClickAway)
+            {
                 Close(CloseOnClickAwayParameter);
+            }
         }
 
         private void OpenDialogHandler(object sender, ExecutedRoutedEventArgs executedRoutedEventArgs)
         {
-            if (executedRoutedEventArgs.Handled) return;
+            if (executedRoutedEventArgs.Handled)
+            {
+                return;
+            }
 
             var dependencyObject = executedRoutedEventArgs.OriginalSource as DependencyObject;
             if (dependencyObject != null)
@@ -678,7 +718,10 @@ namespace MaterialDesignThemes.Wpf
 
         private void CloseDialogHandler(object sender, ExecutedRoutedEventArgs executedRoutedEventArgs)
         {
-            if (executedRoutedEventArgs.Handled) return;
+            if (executedRoutedEventArgs.Handled)
+            {
+                return;
+            }
 
             Close(executedRoutedEventArgs.Parameter);
 

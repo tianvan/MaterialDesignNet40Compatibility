@@ -34,7 +34,10 @@ namespace MaterialDesignThemes.Wpf
 
             public MouseNotOverManagedWaitHandle(UIElement uiElement)
             {
-                if (uiElement == null) throw new ArgumentNullException(nameof(uiElement));
+                if (uiElement == null)
+                {
+                    throw new ArgumentNullException(nameof(uiElement));
+                }
 
                 _waitHandle = new ManualResetEvent(!uiElement.IsMouseOver);
                 uiElement.MouseEnter += UiElementOnMouseEnter;
@@ -67,22 +70,28 @@ namespace MaterialDesignThemes.Wpf
                     }
                     catch (ObjectDisposedException)
                     {
-                        /* we are we suppresing this? 
+                        /* we are we suppresing this?
                          * as we have switched out wait onto another thread, so we don't block the UI thread, the
                          * _cleanUp/Dispose() action might also happen, and the _disposedWaitHandle might get disposed
                          * just before we WaitOne. We wond add a lock in the _cleanUp because it might block for 2 seconds.
                          * We could use a Monitor.TryEnter in _cleanUp and run clean up after but oh my gosh it's just getting
-                         * too complicated for this use case, so for the rare times this happens, we can swallow safely                         
+                         * too complicated for this use case, so for the rare times this happens, we can swallow safely
                          */
                     }
 
                 }).ContinueWith(t =>
                 {
-                    if (((UIElement) sender).IsMouseOver) return;
+                    if (((UIElement)sender).IsMouseOver)
+                    {
+                        return;
+                    }
+
                     lock (_waitHandleGate)
                     {
                         if (!_isWaitHandleDisposed)
+                        {
                             _waitHandle.Set();
+                        }
                     }
                 }, TaskScheduler.FromCurrentSynchronizationContext());
             }
@@ -112,10 +121,20 @@ namespace MaterialDesignThemes.Wpf
                 EventWaitHandle signalWhenDurationPassedWaitHandle,
                 WaitHandle ceaseWaitHandle)
             {
-                if (pausedWaitHandle == null) throw new ArgumentNullException(nameof(pausedWaitHandle));
+                if (pausedWaitHandle == null)
+                {
+                    throw new ArgumentNullException(nameof(pausedWaitHandle));
+                }
+
                 if (signalWhenDurationPassedWaitHandle == null)
+                {
                     throw new ArgumentNullException(nameof(signalWhenDurationPassedWaitHandle));
-                if (ceaseWaitHandle == null) throw new ArgumentNullException(nameof(ceaseWaitHandle));
+                }
+
+                if (ceaseWaitHandle == null)
+                {
+                    throw new ArgumentNullException(nameof(ceaseWaitHandle));
+                }
 
                 _completionTime = DateTime.Now.Add(minimumDuration);
 
@@ -134,7 +153,9 @@ namespace MaterialDesignThemes.Wpf
                     }
 
                     if (DateTime.Now >= _completionTime)
+                    {
                         signalWhenDurationPassedWaitHandle.Set();
+                    }
                 });
             }
 
@@ -160,11 +181,14 @@ namespace MaterialDesignThemes.Wpf
             Task.Factory.StartNew(PumpAsync);
         }
 
-        //oh if only I had Disposable.Create in this lib :)  tempted to copy it in like dragabalz, 
+        //oh if only I had Disposable.Create in this lib :)  tempted to copy it in like dragabalz,
         //but this is an internal method so no one will know my direty Action disposer...
         internal Action Pair(Snackbar snackbar)
         {
-            if (snackbar == null) throw new ArgumentNullException(nameof(snackbar));
+            if (snackbar == null)
+            {
+                throw new ArgumentNullException(nameof(snackbar));
+            }
 
             _pairedSnackbars.Add(snackbar);
 
@@ -173,20 +197,27 @@ namespace MaterialDesignThemes.Wpf
 
         internal Action Pause()
         {
-            if (_isDisposed) return () => { };
+            if (_isDisposed)
+            {
+                return () => { };
+            }
 
             if (Interlocked.Increment(ref _pauseCounter) == 1)
+            {
                 _pausedEvent.Set();
+            }
 
             return () =>
             {
                 if (Interlocked.Decrement(ref _pauseCounter) == 0)
+                {
                     _pausedEvent.Reset();
+                }
             };
         }
 
         /// <summary>
-        /// Gets or sets a value that indicates whether this message queue displays messages without discarding duplicates. 
+        /// Gets or sets a value that indicates whether this message queue displays messages without discarding duplicates.
         /// True to show every message even if there are duplicates.
         /// </summary>
         public bool IgnoreDuplicate { get; set; }
@@ -198,7 +229,10 @@ namespace MaterialDesignThemes.Wpf
 
         public void Enqueue(object content, bool neverConsiderToBeDuplicate)
         {
-            if (content == null) throw new ArgumentNullException(nameof(content));
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
 
             Enqueue(content, null, null, null, false, neverConsiderToBeDuplicate);
         }
@@ -210,10 +244,21 @@ namespace MaterialDesignThemes.Wpf
 
         public void Enqueue(object content, object actionContent, Action actionHandler, bool promote)
         {
-            if (content == null) throw new ArgumentNullException(nameof(content));
-            if (actionContent == null) throw new ArgumentNullException(nameof(actionContent));
-            if (actionHandler == null) throw new ArgumentNullException(nameof(actionHandler));
-            
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
+
+            if (actionContent == null)
+            {
+                throw new ArgumentNullException(nameof(actionContent));
+            }
+
+            if (actionHandler == null)
+            {
+                throw new ArgumentNullException(nameof(actionHandler));
+            }
+
             Enqueue(content, actionContent, _ => actionHandler(), promote, false, false);
         }
 
@@ -224,13 +269,18 @@ namespace MaterialDesignThemes.Wpf
         }
 
         public void Enqueue<TArgument>(object content, object actionContent, Action<TArgument> actionHandler,
-            TArgument actionArgument, bool promote) =>
+            TArgument actionArgument, bool promote)
+        {
             Enqueue(content, actionContent, actionHandler, actionArgument, promote, promote);
+        }
 
         public void Enqueue<TArgument>(object content, object actionContent, Action<TArgument> actionHandler,
             TArgument actionArgument, bool promote, bool neverConsiderToBeDuplicate)
         {
-            if (content == null) throw new ArgumentNullException(nameof(content));
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
 
             if (actionContent == null ^ actionHandler == null)
             {
@@ -247,7 +297,10 @@ namespace MaterialDesignThemes.Wpf
         public void Enqueue(object content, object actionContent, Action<object> actionHandler,
             object actionArgument, bool promote, bool neverConsiderToBeDuplicate)
         {
-            if (content == null) throw new ArgumentNullException(nameof(content));
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
 
             if (actionContent == null ^ actionHandler == null)
             {
@@ -258,16 +311,20 @@ namespace MaterialDesignThemes.Wpf
             var snackbarMessageQueueItem = new SnackbarMessageQueueItem(content, actionContent, actionHandler,
                 actionArgument, promote, neverConsiderToBeDuplicate);
             if (promote)
+            {
                 InsertAsLastNotPromotedNode(snackbarMessageQueueItem);
+            }
             else
+            {
                 _snackbarMessages.AddLast(snackbarMessageQueueItem);
+            }
 
             _messageWaitingEvent.Set();
         }
 
         private void InsertAsLastNotPromotedNode(SnackbarMessageQueueItem snackbarMessageQueueItem)
         {
-            var node = _snackbarMessages.First;
+            LinkedListNode<SnackbarMessageQueueItem> node = _snackbarMessages.First;
             while (node != null)
             {
                 if (!node.Value.IsPromoted)
@@ -285,8 +342,12 @@ namespace MaterialDesignThemes.Wpf
             while (!_isDisposed)
             {
                 var eventId = WaitHandle.WaitAny(new WaitHandle[] { _disposedEvent, _messageWaitingEvent });
-                if (eventId == 0) continue;
-                var exemplar = _pairedSnackbars.FirstOrDefault();
+                if (eventId == 0)
+                {
+                    continue;
+                }
+
+                Snackbar exemplar = _pairedSnackbars.FirstOrDefault();
                 if (exemplar == null)
                 {
                     Trace.TraceWarning(
@@ -301,7 +362,7 @@ namespace MaterialDesignThemes.Wpf
                 //show message
                 if (snackbar != null)
                 {
-                    var message = _snackbarMessages.First.Value;
+                    SnackbarMessageQueueItem message = _snackbarMessages.First.Value;
                     _snackbarMessages.RemoveFirst();
                     if (_latestShownItem == null
                         || IgnoreDuplicate
@@ -321,9 +382,13 @@ namespace MaterialDesignThemes.Wpf
                 }
 
                 if (_snackbarMessages.Count > 0)
+                {
                     _messageWaitingEvent.Set();
+                }
                 else
+                {
                     _messageWaitingEvent.Reset();
+                }
             }
         }
 
@@ -333,7 +398,11 @@ namespace MaterialDesignThemes.Wpf
             {
                 return _pairedSnackbars.FirstOrDefault(sb =>
                 {
-                    if (!sb.IsLoaded || sb.Visibility != Visibility.Visible) return false;
+                    if (!sb.IsLoaded || sb.Visibility != Visibility.Visible)
+                    {
+                        return false;
+                    }
+
                     var window = Window.GetWindow(sb);
                     return window?.WindowState != WindowState.Minimized;
                 });
@@ -342,7 +411,7 @@ namespace MaterialDesignThemes.Wpf
 
         private async Task ShowAsync(Snackbar snackbar, SnackbarMessageQueueItem messageQueueItem)
         {
-            await Task.Run(async () =>
+            await TaskEx.Run(async () =>
                 {
                     //create and show the message, setting up all the handles we need to wait on
                     var actionClickWaitHandle = new ManualResetEvent(false);
@@ -362,7 +431,7 @@ namespace MaterialDesignThemes.Wpf
                         snackbar.Dispatcher.InvokeAsync(
                             () => snackbar.SetCurrentValue(Snackbar.IsActiveProperty, false));
 
-                    //we could wait for the animation event, but just doing 
+                    //we could wait for the animation event, but just doing
                     //this for now...at least it is prevent extra call back hell
                     _disposedEvent.WaitOne(snackbar.DeactivateStoryboardDuration);
 
@@ -376,7 +445,10 @@ namespace MaterialDesignThemes.Wpf
                 })
                 .ContinueWith(t =>
                 {
-                    if (t.Exception == null) return;
+                    if (t.Exception == null)
+                    {
+                        return;
+                    }
 
                     var exc = t.Exception.InnerExceptions.FirstOrDefault() ?? t.Exception;
                     Trace.WriteLine("Error occured whilst showing Snackbar, exception will be rethrown.");
@@ -391,11 +463,14 @@ namespace MaterialDesignThemes.Wpf
             SnackbarMessageQueueItem messageQueueItem, EventWaitHandle actionClickWaitHandle)
         {
             var clickCount = 0;
-            var snackbarMessage = Create(messageQueueItem);
+            SnackbarMessage snackbarMessage = Create(messageQueueItem);
             snackbarMessage.ActionClick += (sender, args) =>
             {
                 if (++clickCount == 1)
+                {
                     DoActionCallback(messageQueueItem);
+                }
+
                 actionClickWaitHandle.Set();
             };
             snackbar.SetCurrentValue(Snackbar.MessageProperty, snackbarMessage);
@@ -407,7 +482,7 @@ namespace MaterialDesignThemes.Wpf
             MouseNotOverManagedWaitHandle mouseNotOverManagedWaitHandle,
             WaitHandle durationPassedWaitHandle, WaitHandle actionClickWaitHandle)
         {
-            await Task.WhenAny(
+            await TaskEx.WhenAny(
                 Task.Factory.StartNew(() =>
                 {
                     WaitHandle.WaitAll(new[]
