@@ -70,7 +70,9 @@ namespace MaterialDesignThemes.Wpf.Transitions
             Loaded += (sender, args) =>
             {
                 if (SelectedIndex != -1)
+                {
                     ActivateFrame(SelectedIndex, -1);
+                }
             };
         }
 
@@ -87,7 +89,10 @@ namespace MaterialDesignThemes.Wpf.Transitions
         protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
         {
             if (AutoApplyTransitionOrigins)
+            {
                 _nextTransitionOrigin = GetNavigationSourcePoint(e);
+            }
+
             base.OnPreviewMouseLeftButtonDown(e);
         }
 
@@ -111,7 +116,7 @@ namespace MaterialDesignThemes.Wpf.Transitions
 
         private void IsTransitionFinishedHandler(object sender, RoutedEventArgs routedEventArgs)
         {
-            foreach (var slide in Items.OfType<object>().Select(GetSlide).Where(s => s.State == TransitionerSlideState.Previous))
+            foreach (TransitionerSlide slide in Items.OfType<object>().Select(GetSlide).Where(s => s.State == TransitionerSlideState.Previous))
             {
                 slide.SetCurrentValue(TransitionerSlide.StateProperty, TransitionerSlideState.None);
             }
@@ -120,28 +125,40 @@ namespace MaterialDesignThemes.Wpf.Transitions
         private void MoveNextHandler(object sender, ExecutedRoutedEventArgs executedRoutedEventArgs)
         {
             if (AutoApplyTransitionOrigins)
+            {
                 _nextTransitionOrigin = GetNavigationSourcePoint(executedRoutedEventArgs);
+            }
+
             SetCurrentValue(SelectedIndexProperty, Math.Min(Items.Count - 1, SelectedIndex + 1));
         }
 
         private void MovePreviousHandler(object sender, ExecutedRoutedEventArgs executedRoutedEventArgs)
         {
             if (AutoApplyTransitionOrigins)
+            {
                 _nextTransitionOrigin = GetNavigationSourcePoint(executedRoutedEventArgs);
+            }
+
             SetCurrentValue(SelectedIndexProperty, Math.Max(0, SelectedIndex - 1));
         }
 
         private void MoveFirstHandler(object sender, ExecutedRoutedEventArgs executedRoutedEventArgs)
         {
             if (AutoApplyTransitionOrigins)
+            {
                 _nextTransitionOrigin = GetNavigationSourcePoint(executedRoutedEventArgs);
+            }
+
             SetCurrentValue(SelectedIndexProperty, 0);
         }
 
         private void MoveLastHandler(object sender, ExecutedRoutedEventArgs executedRoutedEventArgs)
         {
             if (AutoApplyTransitionOrigins)
+            {
                 _nextTransitionOrigin = GetNavigationSourcePoint(executedRoutedEventArgs);
+            }
+
             SetCurrentValue(SelectedIndexProperty, Items.Count - 1);
         }
 
@@ -150,9 +167,12 @@ namespace MaterialDesignThemes.Wpf.Transitions
             var sourceElement = executedRoutedEventArgs.OriginalSource as FrameworkElement;
             if (sourceElement == null || !IsAncestorOf(sourceElement) || !IsSafePositive(ActualWidth) ||
                 !IsSafePositive(ActualHeight) || !IsSafePositive(sourceElement.ActualWidth) ||
-                !IsSafePositive(sourceElement.ActualHeight)) return null;
+                !IsSafePositive(sourceElement.ActualHeight))
+            {
+                return null;
+            }
 
-            var transitionOrigin = sourceElement.TranslatePoint(new Point(sourceElement.ActualWidth / 2, sourceElement.ActualHeight), this);
+            Point transitionOrigin = sourceElement.TranslatePoint(new Point(sourceElement.ActualWidth / 2, sourceElement.ActualHeight), this);
             transitionOrigin = new Point(transitionOrigin.X / ActualWidth, transitionOrigin.Y / ActualHeight);
             return transitionOrigin;
         }
@@ -164,21 +184,30 @@ namespace MaterialDesignThemes.Wpf.Transitions
 
         private TransitionerSlide GetSlide(object item)
         {
-            if (IsItemItsOwnContainer(item))
+            if (IsItemItsOwnContainerOverride(item))
+            {
                 return (TransitionerSlide)item;
+            }
 
             return (TransitionerSlide)ItemContainerGenerator.ContainerFromItem(item);
         }
 
         private void ActivateFrame(int selectedIndex, int unselectedIndex)
         {
-            if (!IsLoaded) return;
+            if (!IsLoaded)
+            {
+                return;
+            }
 
             TransitionerSlide oldSlide = null, newSlide = null;
             for (var index = 0; index < Items.Count; index++)
             {
-                var slide = GetSlide(Items[index]);
-                if (slide == null) continue;
+                TransitionerSlide slide = GetSlide(Items[index]);
+                if (slide == null)
+                {
+                    continue;
+                }
+
                 if (index == selectedIndex)
                 {
                     newSlide = slide;
@@ -203,7 +232,7 @@ namespace MaterialDesignThemes.Wpf.Transitions
 
             if (oldSlide != null && newSlide != null)
             {
-                var wipe = selectedIndex > unselectedIndex ? oldSlide.ForwardWipe : oldSlide.BackwardWipe;
+                ITransitionWipe wipe = selectedIndex > unselectedIndex ? oldSlide.ForwardWipe : oldSlide.BackwardWipe;
                 if (wipe != null)
                 {
                     wipe.Wipe(oldSlide, newSlide, GetTransitionOrigin(newSlide), this);
@@ -249,10 +278,13 @@ namespace MaterialDesignThemes.Wpf.Transitions
 
         private static void DoStack(params TransitionerSlide[] highestToLowest)
         {
-            if (highestToLowest == null) return;
+            if (highestToLowest == null)
+            {
+                return;
+            }
 
             var pos = highestToLowest.Length;
-            foreach (var slide in highestToLowest.Where(s => s != null))
+            foreach (TransitionerSlide slide in highestToLowest.Where(s => s != null))
             {
                 Panel.SetZIndex(slide, pos--);
             }
